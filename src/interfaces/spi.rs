@@ -3,6 +3,8 @@ use embedded_hal as hal;
 
 use super::SensorInterface;
 
+use core::convert::TryInto;
+
 pub struct SpiInterface<SPI, CS> {
     // SPI port
     spi: SPI,
@@ -74,7 +76,15 @@ where
         Ok(())
     }
 
-    fn read_vec3_i16(&mut self, reg: u8) -> Result<[i16; 3], Self::InterfaceError> {
-        Ok([0, 0, 0])
+    fn read_vec3_i16(&mut self, addr: u8) -> Result<[i16; 3], Self::InterfaceError> {
+        let mut buffer: [u8; 7] = [0; 7];
+
+        self.read_block(addr, &mut buffer)?;
+
+        Ok([
+            (buffer[1] as i16) << 8 | (buffer[2] as i16),
+            (buffer[3] as i16) << 8 | (buffer[4] as i16),
+            (buffer[5] as i16) << 8 | (buffer[6] as i16),
+        ])
     }
 }
